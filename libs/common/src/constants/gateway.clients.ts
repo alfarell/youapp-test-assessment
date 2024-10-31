@@ -1,0 +1,6 @@
+const CLIENTS_NAME = {
+  AUTH_SERVIC: 'AUTH_CLIENT',
+  USER_SERVICE: 'USER_CLIENT',
+};
+
+export default CLIENTS_NAME;
