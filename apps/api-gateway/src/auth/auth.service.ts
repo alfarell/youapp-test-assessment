@@ -1,29 +1,18 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import { AUTH_PATTERNS, CLIENTS_NAME, CreateAccountDto } from '@app/common';
 
 @Injectable()
 export class AuthService {
-  constructor(@Inject('AUTH_CLIENT') private userClient: ClientProxy) {}
+  constructor(
+    @Inject(CLIENTS_NAME.AUTH_SERVIC) private authClient: ClientProxy,
+  ) {}
 
-  create(createAuthDto: CreateAuthDto) {
-    return this.userClient.send('auth', {});
-  }
-
-  findAll() {
-    return this.userClient.send('auth', {});
-  }
-
-  findOne(id: number) {
-    return this.userClient.send('auth', {});
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return this.userClient.send('auth', {});
-  }
-
-  remove(id: number) {
-    return this.userClient.send('auth', {});
+  register(createAccountDto: CreateAccountDto) {
+    const registeredUser = this.authClient.send(
+      AUTH_PATTERNS.REGISTER,
+      createAccountDto,
+    );
+    return registeredUser;
   }
 }

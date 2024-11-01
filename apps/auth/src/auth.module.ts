@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule, getLocalEnv } from '@app/common';
 import * as Joi from 'joi';
 import { MongooseModule } from '@nestjs/mongoose';
+import { Account, AccountSchema } from './schema/auth-account.schema';
 
 const env = getLocalEnv('auth');
 
@@ -20,10 +21,10 @@ const env = getLocalEnv('auth');
     }),
     DatabaseModule,
     MongooseModule.forFeature([
-      // {
-      //   name: Auth.name,
-      //   schema: AuthSchema,
-      // },
+      {
+        name: Account.name,
+        schema: AccountSchema,
+      },
     ]),
   ],
   controllers: [AuthController],

@@ -7,6 +7,8 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(ApiGatewayModule);
 
+  app.setGlobalPrefix('api');
+
   const httpAdapter = app.get(HttpAdapterHost);
   app.useGlobalFilters(new HttpCatchFilter(httpAdapter));
   app.useGlobalPipes(new ValidationPipe());
