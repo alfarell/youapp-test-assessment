@@ -1,6 +1,6 @@
 const AUTH_PATTERNS = {
   REGISTER: 'auth.register',
-  SESSION: 'auth.session',
+  LOGIN: 'auth.login',
 };
 
 export default AUTH_PATTERNS;

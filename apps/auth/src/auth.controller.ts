@@ -1,8 +1,8 @@
 import { Body, Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { MessagePattern } from '@nestjs/microservices';
-import { AUTH_PATTERNS, CreateAccountDto } from '@app/common';
-import { AccountResponseDto } from './dto/account-response.dto';
+import { AUTH_PATTERNS, CreateAccountDto, UserLoginDto } from '@app/common';
+import { AccountResponseDto, SessionResponseDto } from './dto';
 
 @Controller()
 export class AuthController {
@@ -13,5 +13,10 @@ export class AuthController {
     @Body() payload: CreateAccountDto,
   ): Promise<AccountResponseDto> {
     return this.authService.register(payload);
+  }
+
+  @MessagePattern(AUTH_PATTERNS.LOGIN)
+  loginAccount(@Body() payload: UserLoginDto): Promise<SessionResponseDto> {
+    return this.authService.login(payload);
   }
 }

@@ -1,6 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { AUTH_PATTERNS, CLIENTS_NAME, CreateAccountDto } from '@app/common';
+import {
+  AUTH_PATTERNS,
+  CLIENTS_NAME,
+  CreateAccountDto,
+  UserLoginDto,
+} from '@app/common';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +17,14 @@ export class AuthService {
     const registeredUser = this.authClient.send(
       AUTH_PATTERNS.REGISTER,
       createAccountDto,
+    );
+    return registeredUser;
+  }
+
+  login(userLoginDto: UserLoginDto) {
+    const registeredUser = this.authClient.send(
+      AUTH_PATTERNS.LOGIN,
+      userLoginDto,
     );
     return registeredUser;
   }
