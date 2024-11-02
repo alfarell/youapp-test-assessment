@@ -20,18 +20,22 @@ export class HttpCatchFilter implements ExceptionFilter {
 
     const ctx: HttpArgumentsHost = host.switchToHttp();
 
-    const httpStatus =
-      exception?.status ||
-      exception?.response?.statusCode ||
-      HttpStatus.INTERNAL_SERVER_ERROR;
+    const exceptionStatus = parseInt(
+      exception?.status || exception?.response?.statusCode,
+    );
+    const statusCode = exceptionStatus || HttpStatus.INTERNAL_SERVER_ERROR;
+    const message = exception?.response?.message || exception?.message;
+    const error = isNaN(exceptionStatus)
+      ? 'ServerError'
+      : exception?.response?.error;
     const responseBody = {
-      statusCode: httpStatus,
-      message: exception?.response?.message,
-      error: exception?.response?.error,
+      statusCode,
+      message,
+      error,
       name: exception?.name,
       options: exception?.options,
     };
 
-    httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
+    httpAdapter.reply(ctx.getResponse(), responseBody, statusCode);
   }
 }
