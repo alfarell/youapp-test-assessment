@@ -1,29 +1,26 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Inject, Injectable, Request, Scope } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import {
+  CLIENTS_NAME,
+  CreateProfileDto,
+  ProfilePayloadDto,
+  USER_PATTERNS,
+} from '@app/common';
+import { REQUEST } from '@nestjs/core';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class UserService {
-  constructor(@Inject('USER_CLIENT') private userClient: ClientProxy) {}
+  constructor(
+    @Inject(REQUEST) private readonly request: Request,
+    @Inject(CLIENTS_NAME.USER_SERVICE) private userClient: ClientProxy,
+  ) {}
 
-  create(createUserDto: CreateUserDto) {
-    return this.userClient.send('user', {});
-  }
-
-  findAll() {
-    return this.userClient.send('user', {});
-  }
-
-  findOne(id: number) {
-    return this.userClient.send('user', {});
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return this.userClient.send('user', {});
-  }
-
-  remove(id: number) {
-    return this.userClient.send('user', {});
+  create(createProfileDto: CreateProfileDto) {
+    const accountId = this.request.headers['accountId'];
+    const payload: ProfilePayloadDto = {
+      accountId,
+      ...createProfileDto,
+    };
+    return this.userClient.send(USER_PATTERNS.CREATE_PROFILE, payload);
   }
 }

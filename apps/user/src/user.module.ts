@@ -5,7 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule, getLocalEnv } from '@app/common';
 import * as Joi from 'joi';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './schema/user.schema';
+import { Profile, ProfileSchema } from './schema';
 
 const env = getLocalEnv('user');
 
@@ -22,8 +22,8 @@ const env = getLocalEnv('user');
     DatabaseModule,
     MongooseModule.forFeature([
       {
-        name: User.name,
-        schema: UserSchema,
+        name: Profile.name,
+        schema: ProfileSchema,
       },
     ]),
   ],

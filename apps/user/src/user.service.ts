@@ -1,8 +1,36 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { ConfigService } from '@nestjs/config';
+import { Model } from 'mongoose';
+import { Profile } from './schema/user-profile.schema';
+import { ProfileResponseDto } from './dto';
+import { ProfilePayloadDto } from '@app/common';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class UserService {
-  getHello(): string {
-    return 'User Service is Ready!';
+  constructor(
+    @InjectModel(Profile.name) private profileModel: Model<Profile>,
+    private readonly configService: ConfigService,
+  ) {}
+
+  async createProfile(payload: ProfilePayloadDto): Promise<ProfileResponseDto> {
+    try {
+      const profile = new this.profileModel(payload);
+      const saveProfile = await profile.save();
+
+      return new ProfileResponseDto(saveProfile);
+    } catch (err) {
+      const errMessage = err.message;
+      if (errMessage.includes('duplicate')) {
+        throw new RpcException(
+          new BadRequestException(
+            `Profile for accountId : ${err.keyValue.accountId} already exist`,
+          ),
+        );
+      }
+
+      throw new RpcException(new BadRequestException(err));
+    }
   }
 }
