@@ -1,4 +1,4 @@
-import { BaseDocument, genderEnum, zodiacSigns } from '@app/common';
+import { BaseDocument, Gender, zodiacSigns } from '@app/common';
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
 
@@ -10,7 +10,7 @@ export class Profile extends BaseDocument {
   @Prop({ type: SchemaTypes.String, required: true })
   name: string;
 
-  @Prop({ type: SchemaTypes.String, required: true, enum: genderEnum })
+  @Prop({ type: SchemaTypes.String, required: true, enum: Gender })
   gender: string;
 
   @Prop({ type: SchemaTypes.Date, required: true })

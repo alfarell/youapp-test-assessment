@@ -16,25 +16,20 @@ export class UserService {
     @Inject(CLIENTS_NAME.USER_SERVICE) private userClient: ClientProxy,
   ) {}
 
-  get() {
+  getOne() {
     const accountId = this.request.headers['accountId'];
     return this.userClient.send(USER_PATTERNS.GET_PROFILE, accountId);
   }
 
   create(createProfileDto: CreateProfileDto) {
     const accountId = this.request.headers['accountId'];
-    const payload: ProfilePayloadDto = {
-      accountId,
-      ...createProfileDto,
-    };
+    const payload = new ProfilePayloadDto(accountId, createProfileDto);
     return this.userClient.send(USER_PATTERNS.CREATE_PROFILE, payload);
   }
 
   update(updateProfileDto: UpdateProfileDto) {
     const accountId = this.request.headers['accountId'];
-    return this.userClient.send(USER_PATTERNS.UPDATE_PROFILE, {
-      accountId,
-      profile: updateProfileDto,
-    });
+    const payload = new ProfilePayloadDto(accountId, updateProfileDto);
+    return this.userClient.send(USER_PATTERNS.UPDATE_PROFILE, payload);
   }
 }

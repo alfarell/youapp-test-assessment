@@ -1,4 +1,8 @@
-export const genderEnum: string[] = ['male', 'female', 'others'];
+export enum Gender {
+  Male = 'male',
+  Female = 'female',
+  Others = 'others',
+}
 
 export type ZodiacSign = {
   zodiac: string;

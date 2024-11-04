@@ -19,7 +19,7 @@ export class UserController {
   }
 
   @MessagePattern(USER_PATTERNS.UPDATE_PROFILE)
-  updateProfile(@Body() payload): ProfileResponseType {
+  updateProfile(@Body() payload: ProfilePayloadDto): ProfileResponseType {
     return this.userService.updateProfile(payload);
   }
 }

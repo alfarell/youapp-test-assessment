@@ -30,7 +30,10 @@ export class UserService {
 
   async createProfile(payload: ProfilePayloadDto): ProfileResponseType {
     try {
-      const profile = new this.profileModel(payload);
+      const profile = new this.profileModel({
+        accountId: payload.accountId,
+        ...payload.profile,
+      });
       const saveProfile = await profile.save();
 
       return new FormatResponse<Profile>('Create profile success', saveProfile);
@@ -48,7 +51,7 @@ export class UserService {
     }
   }
 
-  async updateProfile(payload): ProfileResponseType {
+  async updateProfile(payload: ProfilePayloadDto): ProfileResponseType {
     const accountId = payload.accountId;
     const newProfile = payload.profile;
 

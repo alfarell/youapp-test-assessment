@@ -7,8 +7,8 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('getProfile')
-  get() {
-    return this.userService.get();
+  getOne() {
+    return this.userService.getOne();
   }
 
   @Post('createProfile')

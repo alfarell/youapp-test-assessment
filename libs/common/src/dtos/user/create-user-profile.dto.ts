@@ -1,4 +1,4 @@
-import { genderEnum } from '@app/common/constants';
+import { Gender } from '@app/common/constants';
 import { applyDecorators } from '@nestjs/common';
 import {
   IsString,
@@ -23,7 +23,7 @@ export class CreateProfileDto {
   name: string;
 
   @IsRequiredString()
-  @IsEnum(genderEnum)
+  @IsEnum(Gender)
   gender: string;
 
   @IsDateString()
