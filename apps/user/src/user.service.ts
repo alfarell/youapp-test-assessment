@@ -7,8 +7,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Error, Model } from 'mongoose';
 import { Profile } from './schema/user-profile.schema';
-import { ProfileResponseDto } from './dto';
-import { ProfilePayloadDto } from '@app/common';
+import { ProfileResponseType } from './dto';
+import { FormatResponse, ProfilePayloadDto } from '@app/common';
 import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
@@ -18,22 +18,22 @@ export class UserService {
     private readonly configService: ConfigService,
   ) {}
 
-  async getProfile(accountId: string): Promise<Profile> {
+  async getProfile(accountId: string): ProfileResponseType {
     try {
       const profile = await this.profileModel.findOne({ accountId });
 
-      return profile;
+      return new FormatResponse<Profile>('Get profile success', profile);
     } catch (err) {
       throw new RpcException(new UnauthorizedException(err));
     }
   }
 
-  async createProfile(payload: ProfilePayloadDto): Promise<ProfileResponseDto> {
+  async createProfile(payload: ProfilePayloadDto): ProfileResponseType {
     try {
       const profile = new this.profileModel(payload);
       const saveProfile = await profile.save();
 
-      return new ProfileResponseDto(saveProfile);
+      return new FormatResponse<Profile>('Create profile success', saveProfile);
     } catch (err) {
       const errMessage = err.message;
       if (errMessage.includes('duplicate')) {
@@ -48,18 +48,21 @@ export class UserService {
     }
   }
 
-  async updateProfile(payload): Promise<ProfileResponseDto> {
+  async updateProfile(payload): ProfileResponseType {
     const accountId = payload.accountId;
     const newProfile = payload.profile;
 
     try {
-      const profile = await this.profileModel.findOneAndUpdate(
+      const updateProfile = await this.profileModel.findOneAndUpdate(
         { accountId },
         newProfile,
         { new: true },
       );
 
-      return new ProfileResponseDto(profile);
+      return new FormatResponse<Profile>(
+        'Update profile success',
+        updateProfile,
+      );
     } catch (err) {
       if (err instanceof Error.CastError) {
         if (err.kind === 'ObjectId' && err.path === 'accountId') {
