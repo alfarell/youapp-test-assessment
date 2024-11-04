@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Model } from 'mongoose';
@@ -13,6 +17,16 @@ export class UserService {
     @InjectModel(Profile.name) private profileModel: Model<Profile>,
     private readonly configService: ConfigService,
   ) {}
+
+  async getProfile(accountId: string): Promise<Profile> {
+    try {
+      const profile = await this.profileModel.findOne({ accountId });
+
+      return profile;
+    } catch (err) {
+      throw new RpcException(new UnauthorizedException(err));
+    }
+  }
 
   async createProfile(payload: ProfilePayloadDto): Promise<ProfileResponseDto> {
     try {

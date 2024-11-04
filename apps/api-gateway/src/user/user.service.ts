@@ -15,6 +15,11 @@ export class UserService {
     @Inject(CLIENTS_NAME.USER_SERVICE) private userClient: ClientProxy,
   ) {}
 
+  get() {
+    const accountId = this.request.headers['accountId'];
+    return this.userClient.send(USER_PATTERNS.GET_PROFILE, accountId);
+  }
+
   create(createProfileDto: CreateProfileDto) {
     const accountId = this.request.headers['accountId'];
     const payload: ProfilePayloadDto = {

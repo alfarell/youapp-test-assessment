@@ -3,10 +3,16 @@ import { UserService } from './user.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { ProfilePayloadDto, USER_PATTERNS } from '@app/common';
 import { ProfileResponseDto } from './dto/profile-response.dto';
+import { Profile } from './schema';
 
 @Controller()
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @MessagePattern(USER_PATTERNS.GET_PROFILE)
+  getProfile(@Body() accountId: string): Promise<Profile> {
+    return this.userService.getProfile(accountId);
+  }
 
   @MessagePattern(USER_PATTERNS.CREATE_PROFILE)
   createProfile(

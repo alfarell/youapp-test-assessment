@@ -1,4 +1,5 @@
 const USER_PATTERNS = {
+  GET_PROFILE: 'user.get_rofile',
   CREATE_PROFILE: 'user.create_rofile',
 };
 
