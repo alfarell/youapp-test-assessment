@@ -3,7 +3,6 @@ import { Account } from '../schema';
 export interface AccessTokenType {
   tokenType: string;
   accessToken: string;
-  refreshToken: string;
 }
 
 export interface AccountType {

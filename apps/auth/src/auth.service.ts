@@ -9,7 +9,7 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { CreateAccountDto, UserLoginDto } from '@app/common';
+import { CreateAccountDto, TokenPayload, UserLoginDto } from '@app/common';
 import { Account, Session } from './schema';
 import { RpcException } from '@nestjs/microservices';
 import { AccessTokenType, AccountResponseDto, SessionResponseDto } from './dto';
@@ -121,37 +121,17 @@ export class AuthService {
     account: Account,
     session: Session,
   ): AccessTokenType {
-    const refreshTokenSecret = this.configService.get<string>(
-      'REFRESH_TOKEN_SECRET',
-    );
-    const refreshExpiresIn = this.configService.get<number>(
-      'REFRESH_TOKEN_EXPIRES',
-    );
+    const payload: TokenPayload = {
+      accountId: account.id,
+    };
 
-    const accessToken = this.jwtService.sign(
-      {
-        acc: account.id,
-      },
-      {
-        jwtid: session.id,
-      },
-    );
-
-    const refreshToken = this.jwtService.sign(
-      {
-        acc: account.id,
-      },
-      {
-        secret: refreshTokenSecret,
-        expiresIn: refreshExpiresIn,
-        jwtid: session.id,
-      },
-    );
+    const accessToken = this.jwtService.sign(payload, {
+      jwtid: session.id,
+    });
 
     return {
       tokenType: 'bearer',
       accessToken,
-      refreshToken,
     };
   }
 }

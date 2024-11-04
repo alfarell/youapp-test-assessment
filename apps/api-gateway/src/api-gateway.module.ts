@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { getLocalEnv, CLIENTS_NAME } from '@app/common';
+import { getLocalEnv, CLIENTS_NAME, AuthGuard } from '@app/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
 
 const env = getLocalEnv('api-gateway');
 
@@ -16,6 +18,8 @@ const env = getLocalEnv('api-gateway');
         PORT: Joi.number().required(),
         AUTH_SERVICE_PORT: Joi.string().required(),
         USER_SERVICE_PORT: Joi.string().required(),
+        ACCESS_TOKEN_SECRET: Joi.string().required(),
+        ACCESS_TOKEN_EXPIRES: Joi.number().required(),
       }),
       envFilePath: env,
     }),
@@ -44,8 +48,24 @@ const env = getLocalEnv('api-gateway');
         },
       ],
     }),
+    JwtModule.registerAsync({
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('ACCESS_TOKEN_SECRET'),
+        signOptions: {
+          expiresIn: configService.get<number>('ACCESS_TOKEN_EXPIRES'),
+          algorithm: 'HS512',
+        },
+      }),
+      inject: [ConfigService],
+    }),
     UserModule,
     AuthModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
   ],
 })
 export class ApiGatewayModule {}
