@@ -2,7 +2,7 @@ import { Body, Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { ProfilePayloadDto, USER_PATTERNS } from '@app/common';
-import { ProfileResponseDto } from './dto/profile-response.dto';
+import { ProfileResponseDto } from './dto';
 import { Profile } from './schema';
 
 @Controller()
@@ -19,5 +19,10 @@ export class UserController {
     @Body() payload: ProfilePayloadDto,
   ): Promise<ProfileResponseDto> {
     return this.userService.createProfile(payload);
+  }
+
+  @MessagePattern(USER_PATTERNS.UPDATE_PROFILE)
+  updateProfile(@Body() payload): Promise<ProfileResponseDto> {
+    return this.userService.updateProfile(payload);
   }
 }

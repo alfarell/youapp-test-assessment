@@ -4,6 +4,7 @@ import {
   CLIENTS_NAME,
   CreateProfileDto,
   ProfilePayloadDto,
+  UpdateProfileDto,
   USER_PATTERNS,
 } from '@app/common';
 import { REQUEST } from '@nestjs/core';
@@ -27,5 +28,13 @@ export class UserService {
       ...createProfileDto,
     };
     return this.userClient.send(USER_PATTERNS.CREATE_PROFILE, payload);
+  }
+
+  update(updateProfileDto: UpdateProfileDto) {
+    const accountId = this.request.headers['accountId'];
+    return this.userClient.send(USER_PATTERNS.UPDATE_PROFILE, {
+      accountId,
+      profile: updateProfileDto,
+    });
   }
 }

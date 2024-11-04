@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
-import { Model } from 'mongoose';
+import { Error, Model } from 'mongoose';
 import { Profile } from './schema/user-profile.schema';
 import { ProfileResponseDto } from './dto';
 import { ProfilePayloadDto } from '@app/common';
@@ -42,6 +42,29 @@ export class UserService {
             `Profile for accountId : ${err.keyValue.accountId} already exist`,
           ),
         );
+      }
+
+      throw new RpcException(new BadRequestException(err));
+    }
+  }
+
+  async updateProfile(payload): Promise<ProfileResponseDto> {
+    const accountId = payload.accountId;
+    const newProfile = payload.profile;
+
+    try {
+      const profile = await this.profileModel.findOneAndUpdate(
+        { accountId },
+        newProfile,
+        { new: true },
+      );
+
+      return new ProfileResponseDto(profile);
+    } catch (err) {
+      if (err instanceof Error.CastError) {
+        if (err.kind === 'ObjectId' && err.path === 'accountId') {
+          throw new RpcException(new UnauthorizedException());
+        }
       }
 
       throw new RpcException(new BadRequestException(err));
