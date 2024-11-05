@@ -20,6 +20,8 @@ const env = getLocalEnv('api-gateway');
         USER_SERVICE_PORT: Joi.string().required(),
         ACCESS_TOKEN_SECRET: Joi.string().required(),
         ACCESS_TOKEN_EXPIRES: Joi.number().required(),
+        RABBIT_MQ_URI: Joi.string().required(),
+        RABBIT_MQ_MESSAGE_QUEUE: Joi.string().required(),
       }),
       envFilePath: env,
     }),
@@ -42,6 +44,17 @@ const env = getLocalEnv('api-gateway');
             transport: Transport.TCP,
             options: {
               port: configService.get('USER_SERVICE_PORT'),
+            },
+          }),
+          inject: [ConfigService],
+        },
+        {
+          name: CLIENTS_NAME.MESSAGE_RMQ_SERVICE,
+          useFactory: (configService: ConfigService) => ({
+            transport: Transport.RMQ,
+            options: {
+              urls: configService.get('RABBIT_MQ_URI'),
+              queue: configService.get('RABBIT_MQ_MESSAGE_QUEUE'),
             },
           }),
           inject: [ConfigService],
