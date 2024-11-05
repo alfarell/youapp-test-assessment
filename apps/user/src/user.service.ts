@@ -20,7 +20,9 @@ export class UserService {
 
   async getProfile(accountId: string): ProfileResponseType {
     try {
-      const profile = await this.profileModel.findOne({ accountId });
+      const profile = await this.profileModel
+        .findOne({ accountId })
+        .select('-createdAt -updatedAt');
 
       return new FormatResponse<Profile>('Get profile success', profile);
     } catch (err) {
@@ -36,7 +38,10 @@ export class UserService {
       });
       const saveProfile = await profile.save();
 
-      return new FormatResponse<Profile>('Create profile success', saveProfile);
+      return new FormatResponse<Profile>(
+        'Create profile success',
+        saveProfile.toJSON(),
+      );
     } catch (err) {
       const errMessage = err.message;
       if (errMessage.includes('duplicate')) {
@@ -56,11 +61,9 @@ export class UserService {
     const newProfile = payload.profile;
 
     try {
-      const updateProfile = await this.profileModel.findOneAndUpdate(
-        { accountId },
-        newProfile,
-        { new: true },
-      );
+      const updateProfile = await this.profileModel
+        .findOneAndUpdate({ accountId }, newProfile, { new: true })
+        .select('-createdAt -updatedAt');
 
       return new FormatResponse<Profile>(
         'Update profile success',

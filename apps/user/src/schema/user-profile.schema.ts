@@ -2,7 +2,17 @@ import { BaseDocument, Gender, zodiacSigns } from '@app/common';
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes } from 'mongoose';
 
-@Schema({ versionKey: false, timestamps: true })
+@Schema({
+  versionKey: false,
+  timestamps: true,
+  toJSON: {
+    transform: function (doc, ret) {
+      delete ret.createdAt;
+      delete ret.updatedAt;
+      return ret;
+    },
+  },
+})
 export class Profile extends BaseDocument {
   @Prop({ type: SchemaTypes.ObjectId, required: true, unique: true })
   accountId: string;
