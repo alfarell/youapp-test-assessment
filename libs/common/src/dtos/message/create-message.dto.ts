@@ -1,17 +1,7 @@
-import { applyDecorators } from '@nestjs/common';
-import {
-  IsString,
-  IsNotEmpty,
-  IsNotEmptyObject,
-  IsObject,
-  ValidateNested,
-} from 'class-validator';
+import { IsNotEmptyObject, IsObject, ValidateNested } from 'class-validator';
 import { SendMessageDto } from './send-message.dto';
 import { Type } from 'class-transformer';
-
-function IsRequiredString() {
-  return applyDecorators(IsString(), IsNotEmpty());
-}
+import { IsRequiredString } from '../custom-validators';
 
 export class CreateMessageDto {
   @IsRequiredString()

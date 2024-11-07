@@ -1,9 +1,5 @@
-import { applyDecorators } from '@nestjs/common';
-import { IsString, IsNotEmpty, IsEmail } from 'class-validator';
-
-function IsRequiredString() {
-  return applyDecorators(IsString(), IsNotEmpty());
-}
+import { IsNotEmpty, IsEmail } from 'class-validator';
+import { IsRequiredString } from '../custom-validators';
 
 export class CreateAccountDto {
   @IsRequiredString()

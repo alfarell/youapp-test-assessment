@@ -1,21 +1,6 @@
 import { Gender } from '@app/common/constants';
-import { applyDecorators } from '@nestjs/common';
-import {
-  IsString,
-  IsNotEmpty,
-  IsDateString,
-  MaxLength,
-  IsEnum,
-  IsNumber,
-} from 'class-validator';
-
-function IsRequiredString() {
-  return applyDecorators(IsString(), IsNotEmpty());
-}
-
-function IsRequiredNumber() {
-  return applyDecorators(IsNumber(), IsNotEmpty());
-}
+import { IsDateString, MaxLength, IsEnum } from 'class-validator';
+import { IsRequiredNumber, IsRequiredString } from '../custom-validators';
 
 export class CreateProfileDto {
   @IsRequiredString()
