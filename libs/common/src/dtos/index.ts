@@ -4,3 +4,5 @@ export * from './user/create-user-profile.dto';
 export * from './user/update-user-profile.dto';
 export * from './user/profile-payload.dto';
 export * from './format-response.dto';
+export * from './message/send-message.dto';
+export * from './message/create-message.dto';

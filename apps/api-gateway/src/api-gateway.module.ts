@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { MessageModule } from './message/message.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { getLocalEnv, CLIENTS_NAME, AuthGuard } from '@app/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -18,10 +19,12 @@ const env = getLocalEnv('api-gateway');
         PORT: Joi.number().required(),
         AUTH_SERVICE_PORT: Joi.string().required(),
         USER_SERVICE_PORT: Joi.string().required(),
+        MESSAGE_SERVICE_PORT: Joi.string().required(),
         ACCESS_TOKEN_SECRET: Joi.string().required(),
         ACCESS_TOKEN_EXPIRES: Joi.number().required(),
         RABBIT_MQ_URI: Joi.string().required(),
-        RABBIT_MQ_MESSAGE_QUEUE: Joi.string().required(),
+        RABBIT_MQ_SEND_MESSAGE_QUEUE: Joi.string().required(),
+        RABBIT_MQ_VIEW_MESSAGE_QUEUE: Joi.string().required(),
       }),
       envFilePath: env,
     }),
@@ -49,12 +52,23 @@ const env = getLocalEnv('api-gateway');
           inject: [ConfigService],
         },
         {
-          name: CLIENTS_NAME.MESSAGE_RMQ_SERVICE,
+          name: CLIENTS_NAME.MESSAGE_SEND_RMQ_SERVICE,
           useFactory: (configService: ConfigService) => ({
             transport: Transport.RMQ,
             options: {
               urls: configService.get('RABBIT_MQ_URI'),
-              queue: configService.get('RABBIT_MQ_MESSAGE_QUEUE'),
+              queue: configService.get('RABBIT_MQ_SEND_MESSAGE_QUEUE'),
+            },
+          }),
+          inject: [ConfigService],
+        },
+        {
+          name: CLIENTS_NAME.MESSAGE_VIEW_RMQ_SERVICE,
+          useFactory: (configService: ConfigService) => ({
+            transport: Transport.RMQ,
+            options: {
+              urls: configService.get('RABBIT_MQ_URI'),
+              queue: configService.get('RABBIT_MQ_VIEW_MESSAGE_QUEUE'),
             },
           }),
           inject: [ConfigService],
@@ -73,6 +87,7 @@ const env = getLocalEnv('api-gateway');
     }),
     UserModule,
     AuthModule,
+    MessageModule,
   ],
   providers: [
     {

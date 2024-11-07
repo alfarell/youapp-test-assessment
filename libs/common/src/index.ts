@@ -4,3 +4,4 @@ export * from './dtos';
 export * from './filters';
 export * from './database';
 export * from './guards';
+export * from './rabbitmq';
