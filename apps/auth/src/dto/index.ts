@@ -1,2 +1,2 @@
-export * from './account-response.dto';
-export * from './session-response.dto';
+export * from './register-response.dto';
+export * from './login-response.dto';

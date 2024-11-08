@@ -7,7 +7,7 @@ import {
   FormatRpcRequest,
   UserLoginDto,
 } from '@app/common';
-import { AccountResponseDto, SessionResponseDto } from './dto';
+import { LoginResponse, RegisterResponse } from './dto';
 
 @Controller()
 export class AuthController {
@@ -16,14 +16,12 @@ export class AuthController {
   @MessagePattern(AUTH_PATTERNS.REGISTER)
   registerAccount(
     @Body() payload: FormatRpcRequest<CreateAccountDto>,
-  ): Promise<AccountResponseDto> {
+  ): RegisterResponse {
     return this.authService.register(payload);
   }
 
   @MessagePattern(AUTH_PATTERNS.LOGIN)
-  loginAccount(
-    @Body() payload: FormatRpcRequest<UserLoginDto>,
-  ): Promise<SessionResponseDto> {
+  loginAccount(@Body() payload: FormatRpcRequest<UserLoginDto>): LoginResponse {
     return this.authService.login(payload);
   }
 }

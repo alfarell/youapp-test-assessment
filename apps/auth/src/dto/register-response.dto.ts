@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { Account } from '../schema/auth-account.schema';
+import { FormatResponse } from '@app/common';
 
 export class AccountResponseDto {
   id: Types.ObjectId;
@@ -8,3 +9,5 @@ export class AccountResponseDto {
     this.id = account._id;
   }
 }
+
+export type RegisterResponse = Promise<FormatResponse<AccountResponseDto>>;

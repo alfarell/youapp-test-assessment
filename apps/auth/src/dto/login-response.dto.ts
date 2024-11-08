@@ -1,3 +1,4 @@
+import { FormatResponse } from '@app/common';
 import { Account } from '../schema';
 
 export interface AccessTokenType {
@@ -22,3 +23,5 @@ export class SessionResponseDto {
     };
   }
 }
+
+export type LoginResponse = Promise<FormatResponse<SessionResponseDto>>;

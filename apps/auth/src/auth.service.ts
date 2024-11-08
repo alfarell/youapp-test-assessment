@@ -10,13 +10,20 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import {
   CreateAccountDto,
+  FormatResponse,
   FormatRpcRequest,
   TokenPayload,
   UserLoginDto,
 } from '@app/common';
 import { Account, Session } from './schema';
 import { RpcException } from '@nestjs/microservices';
-import { AccessTokenType, AccountResponseDto, SessionResponseDto } from './dto';
+import {
+  AccessTokenType,
+  AccountResponseDto,
+  LoginResponse,
+  RegisterResponse,
+  SessionResponseDto,
+} from './dto';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +36,7 @@ export class AuthService {
   // public methods:
   async register(
     payload: FormatRpcRequest<CreateAccountDto>,
-  ): Promise<AccountResponseDto> {
+  ): RegisterResponse {
     await this._validateCraeteAccount(payload.data);
 
     const { username, email, password } = payload.data;
@@ -42,12 +49,13 @@ export class AuthService {
     });
     const account = await createAccount.save();
 
-    return new AccountResponseDto(account);
+    return new FormatResponse<AccountResponseDto>(
+      'Register new account success',
+      new AccountResponseDto(account),
+    );
   }
 
-  async login(
-    userLoginDto: FormatRpcRequest<UserLoginDto>,
-  ): Promise<SessionResponseDto> {
+  async login(userLoginDto: FormatRpcRequest<UserLoginDto>): LoginResponse {
     const { usernameOrEmail, password } = userLoginDto.data;
 
     const account = await this._validateAccount(usernameOrEmail);
@@ -55,7 +63,10 @@ export class AuthService {
     const session = await this._createSession(account);
     const access = this._createAccessToken(account, session);
 
-    return new SessionResponseDto(access, account);
+    return new FormatResponse<SessionResponseDto>(
+      'Login success',
+      new SessionResponseDto(access, account),
+    );
   }
 
   // private methods:
