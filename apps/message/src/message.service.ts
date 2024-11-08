@@ -11,9 +11,10 @@ import {
   CLIENTS_NAME,
   FormatResponse,
   USER_PATTERNS,
-  CreateMessageDto,
   RmqService,
   MessageStatus,
+  SendMessageDto,
+  FormatRpcRequest,
 } from '@app/common';
 import { ClientProxy, RmqContext, RpcException } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
@@ -28,7 +29,9 @@ export class MessageService {
     @Inject() private rmqService: RmqService,
   ) {}
 
-  async viewMessage(accountId: string) {
+  async viewMessage(payload: FormatRpcRequest) {
+    const { accountId } = payload.params;
+
     try {
       const profile = await this._getSenderProfile(accountId);
       const messages = await this.messageModel
@@ -66,10 +69,15 @@ export class MessageService {
     }
   }
 
-  async sendMessage(payload: CreateMessageDto, context: RmqContext) {
+  async sendMessage(
+    payload: FormatRpcRequest<SendMessageDto>,
+    context: RmqContext,
+  ) {
+    const { accountId } = payload.params;
+    const { receiverId, content } = payload.data;
+
     try {
-      const { receiverId, content } = payload.data;
-      const senderProfile = await this._getSenderProfile(payload.accountId);
+      const senderProfile = await this._getSenderProfile(accountId);
 
       this._verifyInteractions(senderProfile._id, receiverId);
 
@@ -110,26 +118,27 @@ export class MessageService {
     }
   }
 
-  async _getSenderProfile(accountId: string) {
-    const getProfile = this.userClient.send(
-      USER_PATTERNS.GET_PROFILE,
-      accountId,
-    );
+  private async _getSenderProfile(accountId: string) {
+    const payload = new FormatRpcRequest({ params: { accountId } });
+    const getProfile = this.userClient.send(USER_PATTERNS.GET_PROFILE, payload);
     const profile = await lastValueFrom(getProfile);
 
     return profile.data;
   }
 
-  async _findOneOrCreate(condition: RootFilterQuery<Conversation>, doc) {
-    const find = await this.conversationModel.findOne(condition);
+  private async _findOneOrCreate(
+    condition: RootFilterQuery<Conversation>,
+    doc,
+  ) {
+    const findConversation = await this.conversationModel.findOne(condition);
 
-    if (find) return find;
+    if (findConversation) return findConversation;
 
-    const create = await this.conversationModel.create(doc);
-    return create;
+    const createConversation = await this.conversationModel.create(doc);
+    return createConversation;
   }
 
-  _verifyInteractions(senderId: string, receiverId: string) {
+  private _verifyInteractions(senderId: string, receiverId: string) {
     if (senderId === receiverId) {
       throw new Error('same-sender');
     }

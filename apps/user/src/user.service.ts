@@ -4,39 +4,52 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { ConfigService } from '@nestjs/config';
 import { Error, Model } from 'mongoose';
 import { Profile } from './schema/user-profile.schema';
 import { ProfileResponseType } from './dto';
-import { FormatResponse, ProfilePayloadDto } from '@app/common';
+import {
+  CreateProfileDto,
+  FormatResponse,
+  FormatRpcRequest,
+  UpdateProfileDto,
+} from '@app/common';
 import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(Profile.name) private profileModel: Model<Profile>,
-    private readonly configService: ConfigService,
   ) {}
 
-  async getProfile(accountId: string): ProfileResponseType {
+  async getProfile(payload: FormatRpcRequest): ProfileResponseType {
+    const { accountId } = payload.params;
+
     try {
       const profile = await this.profileModel
         .findOne({ accountId })
         .select('-createdAt -updatedAt');
 
-      return new FormatResponse<Profile>('Get profile success', profile);
+      return new FormatResponse<Profile>(
+        'Get profile success',
+        profile.toJSON(),
+      );
     } catch (err) {
       throw new RpcException(new UnauthorizedException(err));
     }
   }
 
-  async createProfile(payload: ProfilePayloadDto): ProfileResponseType {
+  async createProfile(
+    payload: FormatRpcRequest<CreateProfileDto>,
+  ): ProfileResponseType {
+    const { accountId } = payload.params;
+    const profile = payload.data;
+
     try {
-      const profile = new this.profileModel({
-        accountId: payload.accountId,
-        ...payload.profile,
+      const createProfile = new this.profileModel({
+        accountId,
+        ...profile,
       });
-      const saveProfile = await profile.save();
+      const saveProfile = await createProfile.save();
 
       return new FormatResponse<Profile>(
         'Create profile success',
@@ -56,9 +69,11 @@ export class UserService {
     }
   }
 
-  async updateProfile(payload: ProfilePayloadDto): ProfileResponseType {
-    const accountId = payload.accountId;
-    const newProfile = payload.profile;
+  async updateProfile(
+    payload: FormatRpcRequest<UpdateProfileDto>,
+  ): ProfileResponseType {
+    const { accountId } = payload.params;
+    const newProfile = payload.data;
 
     try {
       const updateProfile = await this.profileModel
@@ -67,7 +82,7 @@ export class UserService {
 
       return new FormatResponse<Profile>(
         'Update profile success',
-        updateProfile,
+        updateProfile.toJSON(),
       );
     } catch (err) {
       if (err instanceof Error.CastError) {

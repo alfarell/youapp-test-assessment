@@ -1,7 +1,7 @@
 import {
   CLIENTS_NAME,
+  FormatRpcRequest,
   MESSAGE_PATTERNS,
-  CreateMessageDto,
   SendMessageDto,
 } from '@app/common';
 import { Inject, Injectable, Scope } from '@nestjs/common';
@@ -13,22 +13,29 @@ export class MessageService {
   constructor(
     @Inject(REQUEST) private readonly request: Request,
     @Inject(CLIENTS_NAME.MESSAGE_VIEW_RMQ_SERVICE)
-    private rmqViewMessageClient: ClientProxy,
+    private readonly rmqViewMessageClient: ClientProxy,
     @Inject(CLIENTS_NAME.MESSAGE_SEND_RMQ_SERVICE)
-    private rmqSendMessageClient: ClientProxy,
+    private readonly rmqSendMessageClient: ClientProxy,
   ) {}
 
   viewMessages() {
     const accountId = this.request.headers['accountId'];
-    return this.rmqViewMessageClient.send(MESSAGE_PATTERNS.VIEW, accountId);
+    const payload = new FormatRpcRequest({
+      params: {
+        accountId,
+      },
+    });
+    return this.rmqViewMessageClient.send(MESSAGE_PATTERNS.VIEW, payload);
   }
 
   sendMessage(sendMessageDto: SendMessageDto) {
     const accountId = this.request.headers['accountId'];
-    const payload: CreateMessageDto = {
-      accountId,
+    const payload = new FormatRpcRequest<SendMessageDto>({
+      params: {
+        accountId,
+      },
       data: sendMessageDto,
-    };
+    });
     return this.rmqSendMessageClient.send(MESSAGE_PATTERNS.SEND, payload);
   }
 }

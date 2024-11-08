@@ -3,7 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import {
   CLIENTS_NAME,
   CreateProfileDto,
-  ProfilePayloadDto,
+  FormatRpcRequest,
   UpdateProfileDto,
   USER_PATTERNS,
 } from '@app/common';
@@ -13,23 +13,38 @@ import { REQUEST } from '@nestjs/core';
 export class UserService {
   constructor(
     @Inject(REQUEST) private readonly request: Request,
-    @Inject(CLIENTS_NAME.USER_SERVICE) private userClient: ClientProxy,
+    @Inject(CLIENTS_NAME.USER_SERVICE) private readonly userClient: ClientProxy,
   ) {}
 
   getOne() {
-    const accountId = this.request.headers['accountId'];
-    return this.userClient.send(USER_PATTERNS.GET_PROFILE, accountId);
+    const accountId: string = this.request.headers['accountId'];
+    const payload = new FormatRpcRequest({
+      params: {
+        accountId,
+      },
+    });
+    return this.userClient.send(USER_PATTERNS.GET_PROFILE, payload);
   }
 
   create(createProfileDto: CreateProfileDto) {
-    const accountId = this.request.headers['accountId'];
-    const payload = new ProfilePayloadDto(accountId, createProfileDto);
+    const accountId: string = this.request.headers['accountId'];
+    const payload = new FormatRpcRequest<CreateProfileDto>({
+      params: {
+        accountId,
+      },
+      data: createProfileDto,
+    });
     return this.userClient.send(USER_PATTERNS.CREATE_PROFILE, payload);
   }
 
   update(updateProfileDto: UpdateProfileDto) {
-    const accountId = this.request.headers['accountId'];
-    const payload = new ProfilePayloadDto(accountId, updateProfileDto);
+    const accountId: string = this.request.headers['accountId'];
+    const payload = new FormatRpcRequest<UpdateProfileDto>({
+      params: {
+        accountId,
+      },
+      data: updateProfileDto,
+    });
     return this.userClient.send(USER_PATTERNS.UPDATE_PROFILE, payload);
   }
 }

@@ -1,10 +1,10 @@
 import { applyDecorators } from '@nestjs/common';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export function IsRequiredString() {
   return applyDecorators(IsString(), IsNotEmpty());
 }
 
 export function IsRequiredNumber() {
-  return applyDecorators(IsString(), IsNotEmpty());
+  return applyDecorators(IsNumber(), IsNotEmpty());
 }

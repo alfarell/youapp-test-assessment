@@ -7,9 +7,13 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { CreateAccountDto, TokenPayload, UserLoginDto } from '@app/common';
+import {
+  CreateAccountDto,
+  FormatRpcRequest,
+  TokenPayload,
+  UserLoginDto,
+} from '@app/common';
 import { Account, Session } from './schema';
 import { RpcException } from '@nestjs/microservices';
 import { AccessTokenType, AccountResponseDto, SessionResponseDto } from './dto';
@@ -19,15 +23,16 @@ export class AuthService {
   constructor(
     @InjectModel(Account.name) private userModel: Model<Account>,
     @InjectModel(Session.name) private sessionModel: Model<Session>,
-    private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
   ) {}
 
   // public methods:
-  async register(payload: CreateAccountDto): Promise<AccountResponseDto> {
-    await this._validateCraeteAccount(payload);
+  async register(
+    payload: FormatRpcRequest<CreateAccountDto>,
+  ): Promise<AccountResponseDto> {
+    await this._validateCraeteAccount(payload.data);
 
-    const { username, email, password } = payload;
+    const { username, email, password } = payload.data;
     const salt = await bcrypt.genSalt();
     const passwordHashed = await bcrypt.hash(password, salt);
     const createAccount = new this.userModel({
@@ -37,13 +42,13 @@ export class AuthService {
     });
     const account = await createAccount.save();
 
-    console.log(account.toJSON());
-
     return new AccountResponseDto(account);
   }
 
-  async login(userLoginDto: UserLoginDto): Promise<SessionResponseDto> {
-    const { usernameOrEmail, password } = userLoginDto;
+  async login(
+    userLoginDto: FormatRpcRequest<UserLoginDto>,
+  ): Promise<SessionResponseDto> {
+    const { usernameOrEmail, password } = userLoginDto.data;
 
     const account = await this._validateAccount(usernameOrEmail);
     await this._validatePassword(password, account.password);
