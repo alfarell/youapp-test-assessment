@@ -34,9 +34,12 @@ export class MessageService {
     const { accountId } = payload.params;
 
     const currentProfile = await this._getProfile(accountId);
-    const messages = await this._findAndUpdateMessages({
-      recipientId: currentProfile._id,
-    });
+    const messages = await this._findAndUpdateMessages(
+      {
+        recipientId: currentProfile._id,
+      },
+      { currentProfileId: currentProfile._id },
+    );
 
     return new FormatResponse<Message[]>('Get messages success', messages);
   }
@@ -96,9 +99,16 @@ export class MessageService {
 
     const profileIds = conversation.participant.map((id) => id.toString());
     const recipientProfile = await this._getProfiles(profileIds);
+    const messages = await this._findAndUpdateMessages(
+      {
+        conversationId,
+      },
+      { currentProfileId: currentProfile._id },
+    );
     const combinedWithProfile = {
       _id: conversation._id,
       participant: recipientProfile,
+      messages: messages || [],
     };
 
     return new FormatResponse('Get conversation success', combinedWithProfile);
@@ -174,19 +184,24 @@ export class MessageService {
   }
 
   private async _findAndUpdateMessages(
-    condition: RootFilterQuery<Message>,
+    messageQuery: RootFilterQuery<Message>,
+    updateBy: { currentProfileId: string },
   ): Promise<Message[]> {
     const messages = await this.messageModel
-      .find(condition)
+      .find(messageQuery)
       .sort({ createdAt: -1 })
       .limit(20);
 
     const filterSentMsg = messages
-      .filter(
-        (message) =>
+      .filter((message) => {
+        const status =
           message.status === MessageStatus.Sent ||
-          message.status === MessageStatus.Delivered,
-      )
+          message.status === MessageStatus.Delivered;
+        const recipient =
+          message.recipientId.toString() === updateBy?.currentProfileId;
+
+        return status && recipient;
+      })
       .map((message) => {
         message.status = MessageStatus.Read;
         return message._id;
