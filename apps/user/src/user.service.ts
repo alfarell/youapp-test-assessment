@@ -38,6 +38,26 @@ export class UserService {
     }
   }
 
+  async getProfiles(
+    payload: FormatRpcRequest<any, { profileIds: string[] }>,
+  ): ProfileResponseType<Profile[]> {
+    const { profileIds } = payload.params;
+
+    try {
+      const profiles = await this.profileModel
+        .find({
+          _id: {
+            $in: profileIds,
+          },
+        })
+        .select('-createdAt -updatedAt');
+
+      return new FormatResponse<Profile[]>('Get profile success', profiles);
+    } catch (err) {
+      throw new RpcException(new UnauthorizedException(err));
+    }
+  }
+
   async createProfile(
     payload: FormatRpcRequest<CreateProfileDto>,
   ): ProfileResponseType {

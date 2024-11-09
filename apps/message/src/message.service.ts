@@ -2,7 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
-  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Conversation, Message } from './schema';
@@ -15,6 +15,7 @@ import {
   MessageStatus,
   SendMessageDto,
   FormatRpcRequest,
+  ConversatoinParams,
 } from '@app/common';
 import { ClientProxy, RmqContext, RpcException } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
@@ -32,41 +33,71 @@ export class MessageService {
   async viewMessage(payload: FormatRpcRequest) {
     const { accountId } = payload.params;
 
-    try {
-      const profile = await this._getSenderProfile(accountId);
-      const messages = await this.messageModel
-        .find({
-          receiverId: profile._id,
-        })
-        .sort({ createdAt: -1 })
-        .limit(20);
+    const currentProfile = await this._getProfile(accountId);
+    const messages = await this._findAndUpdateMessages({
+      recipientId: currentProfile._id,
+    });
 
-      if (messages.length > 0) {
-        const filterSentMsg = messages
-          .filter(
-            (message) =>
-              message.status === MessageStatus.Sent ||
-              message.status === MessageStatus.Delivered,
-          )
-          .map((message) => {
-            message.status = MessageStatus.Read;
-            return message._id;
-          });
+    return new FormatResponse<Message[]>('Get messages success', messages);
+  }
 
-        await this.messageModel.updateMany(
-          {
-            _id: {
-              $in: filterSentMsg,
-            },
-          },
-          { status: MessageStatus.Read },
-        );
-      }
+  async getConversations(payload: FormatRpcRequest) {
+    const { accountId } = payload.params;
 
-      return new FormatResponse<Message[]>('Get message success', messages);
-    } catch (err) {
-      throw new RpcException(new InternalServerErrorException(err));
+    const currentProfile = await this._getProfile(accountId);
+    const conversations = await this.conversationModel.find({
+      participant: {
+        $in: [currentProfile._id],
+      },
+    });
+
+    const profileIds = conversations.reduce((acc, curr) => {
+      return [
+        ...acc,
+        ...curr.participant.filter(
+          (id) => id.toString() !== currentProfile._id,
+        ),
+      ];
+    }, []);
+    const recipientProfiles = await this._getProfiles(profileIds);
+    const combinedWithProfile = conversations.map((conversation) => {
+      const { _id, participant } = conversation;
+      return {
+        _id,
+        participant: recipientProfiles
+          .filter((recipient) => participant.includes(recipient._id))
+          .concat(currentProfile),
+      };
+    });
+
+    return new FormatResponse('Get conversations success', combinedWithProfile);
+  }
+
+  async getConversationById(
+    payload: FormatRpcRequest<any, ConversatoinParams>,
+  ) {
+    const { conversationId, accountId } = payload.params;
+
+    const currentProfile = await this._getProfile(accountId);
+    const conversation = await this.conversationModel.findOne({
+      _id: conversationId,
+      participant: {
+        $in: [currentProfile._id],
+      },
+    });
+
+    if (!conversation) {
+      throw new RpcException(new NotFoundException('Conversation not found'));
     }
+
+    const profileIds = conversation.participant.map((id) => id.toString());
+    const recipientProfile = await this._getProfiles(profileIds);
+    const combinedWithProfile = {
+      _id: conversation._id,
+      participant: recipientProfile,
+    };
+
+    return new FormatResponse('Get conversation success', combinedWithProfile);
   }
 
   async sendMessage(
@@ -74,51 +105,38 @@ export class MessageService {
     context: RmqContext,
   ) {
     const { accountId } = payload.params;
-    const { receiverId, content } = payload.data;
+    const { recipientId, content } = payload.data;
 
-    try {
-      const senderProfile = await this._getSenderProfile(accountId);
+    const senderProfile = await this._getProfile(accountId);
 
-      this._verifyInteractions(senderProfile._id, receiverId);
+    this._verifyInteractions(senderProfile._id, recipientId);
 
-      const participant = [senderProfile._id, receiverId];
-      const conversation = await this._findOneOrCreate(
-        {
-          participant: {
-            $in: participant,
-          },
+    const participant = [senderProfile._id, recipientId];
+    const conversation = await this._findOneOrCreateConversation(
+      {
+        participant: {
+          $all: participant,
         },
-        {
-          participant,
-        },
-      );
+      },
+      {
+        participant,
+      },
+    );
 
-      const createMessage = new this.messageModel({
-        conversationId: conversation._id,
-        senderId: senderProfile._id,
-        receiverId,
-        content,
-      });
-      const message = await createMessage.save();
+    const createMessage = new this.messageModel({
+      conversationId: conversation._id,
+      senderId: senderProfile._id,
+      recipientId,
+      content,
+    });
+    const message = await createMessage.save();
 
-      this.rmqService.ack(context);
+    this.rmqService.ack(context);
 
-      return new FormatResponse(`Message sent to ${message.receiverId}`);
-    } catch (err) {
-      if (err instanceof Error) {
-        if (err.message === 'same-sender') {
-          this.rmqService.ack(context);
-          throw new RpcException(
-            new BadRequestException('Can not send message to own sender'),
-          );
-        }
-      }
-
-      throw new RpcException(new InternalServerErrorException(err));
-    }
+    return new FormatResponse(`Message sent to ${message.recipientId}`);
   }
 
-  private async _getSenderProfile(accountId: string) {
+  private async _getProfile(accountId: string) {
     const payload = new FormatRpcRequest({ params: { accountId } });
     const getProfile = this.userClient.send(USER_PATTERNS.GET_PROFILE, payload);
     const profile = await lastValueFrom(getProfile);
@@ -126,7 +144,20 @@ export class MessageService {
     return profile.data;
   }
 
-  private async _findOneOrCreate(
+  private async _getProfiles(profileIds: string[]) {
+    const payload = new FormatRpcRequest<any, { profileIds: string[] }>({
+      params: { profileIds },
+    });
+    const getProfiles = this.userClient.send(
+      USER_PATTERNS.GET_PROFILES,
+      payload,
+    );
+    const profiles = await lastValueFrom(getProfiles);
+
+    return profiles.data;
+  }
+
+  private async _findOneOrCreateConversation(
     condition: RootFilterQuery<Conversation>,
     doc,
   ) {
@@ -138,9 +169,42 @@ export class MessageService {
     return createConversation;
   }
 
-  private _verifyInteractions(senderId: string, receiverId: string) {
-    if (senderId === receiverId) {
-      throw new Error('same-sender');
+  private async _findAndUpdateMessages(
+    condition: RootFilterQuery<Message>,
+  ): Promise<Message[]> {
+    const messages = await this.messageModel
+      .find(condition)
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    const filterSentMsg = messages
+      .filter(
+        (message) =>
+          message.status === MessageStatus.Sent ||
+          message.status === MessageStatus.Delivered,
+      )
+      .map((message) => {
+        message.status = MessageStatus.Read;
+        return message._id;
+      });
+
+    await this.messageModel.updateMany(
+      {
+        _id: {
+          $in: filterSentMsg,
+        },
+      },
+      { status: MessageStatus.Read },
+    );
+
+    return messages;
+  }
+
+  private _verifyInteractions(senderId: string, recipientId: string) {
+    if (senderId === recipientId) {
+      throw new RpcException(
+        new BadRequestException('Can not send message to own sender'),
+      );
     }
   }
 }

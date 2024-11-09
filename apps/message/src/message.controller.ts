@@ -7,6 +7,7 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import {
+  ConversatoinParams,
   FormatRpcRequest,
   MESSAGE_PATTERNS,
   SendMessageDto,
@@ -19,6 +20,18 @@ export class MessageController {
   @MessagePattern(MESSAGE_PATTERNS.VIEW)
   viewMessage(@Payload() payload: FormatRpcRequest) {
     return this.messageService.viewMessage(payload);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.CONVERSATIONS)
+  getConversations(@Payload() payload: FormatRpcRequest) {
+    return this.messageService.getConversations(payload);
+  }
+
+  @MessagePattern(MESSAGE_PATTERNS.CONVERSATION_ID)
+  getConversationById(
+    @Payload() payload: FormatRpcRequest<any, ConversatoinParams>,
+  ) {
+    return this.messageService.getConversationById(payload);
   }
 
   @MessagePattern(MESSAGE_PATTERNS.SEND)

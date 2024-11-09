@@ -2,7 +2,7 @@ import { IsRequiredString } from '../custom-validators';
 
 export class SendMessageDto {
   @IsRequiredString()
-  receiverId: string;
+  recipientId: string;
 
   @IsRequiredString()
   content: string;

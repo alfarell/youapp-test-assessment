@@ -1,5 +1,6 @@
 import {
   CLIENTS_NAME,
+  ConversatoinParams,
   FormatRpcRequest,
   MESSAGE_PATTERNS,
   SendMessageDto,
@@ -26,6 +27,33 @@ export class MessageService {
       },
     });
     return this.rmqViewMessageClient.send(MESSAGE_PATTERNS.VIEW, payload);
+  }
+
+  getConversations() {
+    const accountId = this.request.headers['accountId'];
+    const payload = new FormatRpcRequest({
+      params: {
+        accountId,
+      },
+    });
+    return this.rmqViewMessageClient.send(
+      MESSAGE_PATTERNS.CONVERSATIONS,
+      payload,
+    );
+  }
+
+  getConversationById(conversationId: string) {
+    const accountId = this.request.headers['accountId'];
+    const payload = new FormatRpcRequest<any, ConversatoinParams>({
+      params: {
+        accountId,
+        conversationId,
+      },
+    });
+    return this.rmqViewMessageClient.send(
+      MESSAGE_PATTERNS.CONVERSATION_ID,
+      payload,
+    );
   }
 
   sendMessage(sendMessageDto: SendMessageDto) {

@@ -6,3 +6,4 @@ export * from './user/update-user-profile.dto';
 export * from './format-response.dto';
 export * from './format-request-rpc.dto';
 export * from './message/send-message.dto';
+export * from './message/get-conversation.dto';

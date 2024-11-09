@@ -28,7 +28,7 @@ export class Message extends BaseDocument {
   senderId: Types.ObjectId;
 
   @Prop({ type: SchemaTypes.ObjectId, required: true, index: true })
-  receiverId: Types.ObjectId;
+  recipientId: Types.ObjectId;
 
   @Prop({ type: SchemaTypes.String, required: true })
   content: string;

@@ -8,6 +8,7 @@ import {
   USER_PATTERNS,
 } from '@app/common';
 import { ProfileResponseType } from './dto';
+import { Profile } from './schema';
 
 @Controller()
 export class UserController {
@@ -16,6 +17,13 @@ export class UserController {
   @MessagePattern(USER_PATTERNS.GET_PROFILE)
   getProfile(@Body() payload: FormatRpcRequest): ProfileResponseType {
     return this.userService.getProfile(payload);
+  }
+
+  @MessagePattern(USER_PATTERNS.GET_PROFILES)
+  getProfiles(
+    @Body() payload: FormatRpcRequest<any, { profileIds: string[] }>,
+  ): ProfileResponseType<Profile[]> {
+    return this.userService.getProfiles(payload);
   }
 
   @MessagePattern(USER_PATTERNS.CREATE_PROFILE)

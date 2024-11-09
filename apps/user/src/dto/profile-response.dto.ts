@@ -1,4 +1,4 @@
 import { FormatResponse } from '@app/common';
 import { Profile } from '../schema';
 
-export type ProfileResponseType = Promise<FormatResponse<Profile>>;
+export type ProfileResponseType<T = Profile> = Promise<FormatResponse<T>>;
