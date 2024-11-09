@@ -17,7 +17,7 @@ import {
   FormatRpcRequest,
   ConversatoinParams,
 } from '@app/common';
-import { ClientProxy, RmqContext, RpcException } from '@nestjs/microservices';
+import { ClientProxy, RmqContext } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 
 @Injectable()
@@ -50,6 +50,10 @@ export class MessageService {
         $in: [currentProfile._id],
       },
     });
+
+    if (conversations.length === 0) {
+      return new FormatResponse('Get conversations success', []);
+    }
 
     const profileIds = conversations.reduce((acc, curr) => {
       return [
@@ -87,7 +91,7 @@ export class MessageService {
     });
 
     if (!conversation) {
-      throw new RpcException(new NotFoundException('Conversation not found'));
+      throw new NotFoundException('Conversation not found');
     }
 
     const profileIds = conversation.participant.map((id) => id.toString());
@@ -109,7 +113,7 @@ export class MessageService {
 
     const senderProfile = await this._getProfile(accountId);
 
-    this._verifyInteractions(senderProfile._id, recipientId);
+    this._verifyInteractions(senderProfile._id, recipientId, context);
 
     const participant = [senderProfile._id, recipientId];
     const conversation = await this._findOneOrCreateConversation(
@@ -200,11 +204,14 @@ export class MessageService {
     return messages;
   }
 
-  private _verifyInteractions(senderId: string, recipientId: string) {
+  private _verifyInteractions(
+    senderId: string,
+    recipientId: string,
+    context: RmqContext,
+  ) {
     if (senderId === recipientId) {
-      throw new RpcException(
-        new BadRequestException('Can not send message to own sender'),
-      );
+      this.rmqService.ack(context);
+      throw new BadRequestException('Can not send message to own sender');
     }
   }
 }

@@ -16,7 +16,6 @@ import {
   UserLoginDto,
 } from '@app/common';
 import { Account, Session } from './schema';
-import { RpcException } from '@nestjs/microservices';
 import {
   AccessTokenType,
   AccountResponseDto,
@@ -74,15 +73,11 @@ export class AuthService {
     const { email, username } = userAccountData;
 
     if (await this._isDataExist({ email })) {
-      throw new RpcException(
-        new ConflictException(`Email "${email}" already registered`),
-      );
+      throw new ConflictException(`Email "${email}" already registered`);
     }
 
     if (await this._isDataExist({ username })) {
-      throw new RpcException(
-        new ConflictException(`Username "${username}" already exist`),
-      );
+      throw new ConflictException(`Username "${username}" already exist`);
     }
 
     return true;
@@ -97,7 +92,7 @@ export class AuthService {
     const isValid = await bcrypt.compare(password, encryptedPassword || '');
 
     if (!isValid) {
-      throw new RpcException(new UnauthorizedException('Invalid credential'));
+      throw new UnauthorizedException('Invalid credential');
     }
   }
 
@@ -114,10 +109,8 @@ export class AuthService {
     });
 
     if (!userAccount) {
-      throw new RpcException(
-        new NotFoundException(
-          `Account with "${usernameOrEmail}" username/email not found`,
-        ),
+      throw new NotFoundException(
+        `Account with "${usernameOrEmail}" username/email not found`,
       );
     }
 

@@ -1,10 +1,6 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Error, Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { Profile } from './schema/user-profile.schema';
 import { ProfileResponseType } from './dto';
 import {
@@ -13,7 +9,6 @@ import {
   FormatRpcRequest,
   UpdateProfileDto,
 } from '@app/common';
-import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class UserService {
@@ -23,19 +18,8 @@ export class UserService {
 
   async getProfile(payload: FormatRpcRequest): ProfileResponseType {
     const { accountId } = payload.params;
-
-    try {
-      const profile = await this.profileModel
-        .findOne({ accountId })
-        .select('-createdAt -updatedAt');
-
-      return new FormatResponse<Profile>(
-        'Get profile success',
-        profile.toJSON(),
-      );
-    } catch (err) {
-      throw new RpcException(new UnauthorizedException(err));
-    }
+    const profile = await this._findProfile(accountId);
+    return new FormatResponse<Profile>('Get profile success', profile.toJSON());
   }
 
   async getProfiles(
@@ -43,19 +27,15 @@ export class UserService {
   ): ProfileResponseType<Profile[]> {
     const { profileIds } = payload.params;
 
-    try {
-      const profiles = await this.profileModel
-        .find({
-          _id: {
-            $in: profileIds,
-          },
-        })
-        .select('-createdAt -updatedAt');
+    const profiles = await this.profileModel
+      .find({
+        _id: {
+          $in: profileIds,
+        },
+      })
+      .select('-createdAt -updatedAt');
 
-      return new FormatResponse<Profile[]>('Get profile success', profiles);
-    } catch (err) {
-      throw new RpcException(new UnauthorizedException(err));
-    }
+    return new FormatResponse<Profile[]>('Get profile success', profiles);
   }
 
   async createProfile(
@@ -64,29 +44,25 @@ export class UserService {
     const { accountId } = payload.params;
     const profile = payload.data;
 
-    try {
-      const createProfile = new this.profileModel({
-        accountId,
-        ...profile,
-      });
-      const saveProfile = await createProfile.save();
-
-      return new FormatResponse<Profile>(
-        'Create profile success',
-        saveProfile.toJSON(),
+    const findProfile = await this.profileModel.findOne({
+      accountId,
+    });
+    if (findProfile) {
+      throw new BadRequestException(
+        `Profile for accountId : ${accountId} already exist`,
       );
-    } catch (err) {
-      const errMessage = err.message;
-      if (errMessage.includes('duplicate')) {
-        throw new RpcException(
-          new BadRequestException(
-            `Profile for accountId : ${err.keyValue.accountId} already exist`,
-          ),
-        );
-      }
-
-      throw new RpcException(new BadRequestException(err));
     }
+
+    const createProfile = new this.profileModel({
+      accountId,
+      ...profile,
+    });
+    const saveProfile = await createProfile.save();
+
+    return new FormatResponse<Profile>(
+      'Create profile success',
+      saveProfile.toJSON(),
+    );
   }
 
   async updateProfile(
@@ -95,23 +71,29 @@ export class UserService {
     const { accountId } = payload.params;
     const newProfile = payload.data;
 
-    try {
-      const updateProfile = await this.profileModel
-        .findOneAndUpdate({ accountId }, newProfile, { new: true })
-        .select('-createdAt -updatedAt');
+    await this._findProfile(accountId);
 
-      return new FormatResponse<Profile>(
-        'Update profile success',
-        updateProfile.toJSON(),
+    const updateProfile = await this.profileModel
+      .findOneAndUpdate({ accountId }, newProfile, { new: true })
+      .select('-createdAt -updatedAt');
+
+    return new FormatResponse<Profile>(
+      'Update profile success',
+      updateProfile.toJSON(),
+    );
+  }
+
+  private async _findProfile(accountId: string) {
+    const profile = await this.profileModel.findOne({
+      accountId,
+    });
+
+    if (!profile) {
+      throw new BadRequestException(
+        'Profile not found. Please create profile first',
       );
-    } catch (err) {
-      if (err instanceof Error.CastError) {
-        if (err.kind === 'ObjectId' && err.path === 'accountId') {
-          throw new RpcException(new UnauthorizedException());
-        }
-      }
-
-      throw new RpcException(new BadRequestException(err));
     }
+
+    return profile;
   }
 }

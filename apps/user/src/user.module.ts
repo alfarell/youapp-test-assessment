@@ -2,10 +2,16 @@ import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule, getLocalEnv } from '@app/common';
+import {
+  CustomRpcExceptionFilter,
+  DatabaseModule,
+  getLocalEnv,
+  MongoExceptionFilter,
+} from '@app/common';
 import * as Joi from 'joi';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Profile, ProfileSchema } from './schema';
+import { APP_FILTER } from '@nestjs/core';
 
 const env = getLocalEnv('user');
 
@@ -28,6 +34,13 @@ const env = getLocalEnv('user');
     ]),
   ],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [
+    UserService,
+    {
+      provide: APP_FILTER,
+      useClass: CustomRpcExceptionFilter,
+    },
+    { provide: APP_FILTER, useClass: MongoExceptionFilter },
+  ],
 })
 export class UserModule {}

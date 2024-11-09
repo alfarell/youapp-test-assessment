@@ -6,12 +6,17 @@ import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
   const app = await NestFactory.create(AuthModule);
   const config = app.get(ConfigService);
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.TCP,
-    options: {
-      port: config.get('PORT'),
+  app.connectMicroservice<MicroserviceOptions>(
+    {
+      transport: Transport.TCP,
+      options: {
+        port: config.get('PORT'),
+      },
     },
-  });
+    {
+      inheritAppConfig: true,
+    },
+  );
   await app.startAllMicroservices();
   await app.listen(config.get('PORT'));
   console.log('server running on PORT:', config.get('PORT'));

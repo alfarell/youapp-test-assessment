@@ -3,10 +3,16 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { DatabaseModule, getLocalEnv } from '@app/common';
+import {
+  CustomRpcExceptionFilter,
+  DatabaseModule,
+  getLocalEnv,
+  MongoExceptionFilter,
+} from '@app/common';
 import * as Joi from 'joi';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Account, AccountSchema, Session, SessionSchema } from './schema';
+import { APP_FILTER } from '@nestjs/core';
 
 const env = getLocalEnv('auth');
 
@@ -45,6 +51,10 @@ const env = getLocalEnv('auth');
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [
+    AuthService,
+    { provide: APP_FILTER, useClass: CustomRpcExceptionFilter },
+    { provide: APP_FILTER, useClass: MongoExceptionFilter },
+  ],
 })
 export class AuthModule {}

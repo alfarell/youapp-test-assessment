@@ -4,7 +4,13 @@ import { MessageService } from './message.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import * as Joi from 'joi';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CLIENTS_NAME, DatabaseModule, getLocalEnv } from '@app/common';
+import {
+  CLIENTS_NAME,
+  CustomRpcExceptionFilter,
+  DatabaseModule,
+  getLocalEnv,
+  MongoExceptionFilter,
+} from '@app/common';
 import {
   Conversation,
   ConversationSchema,
@@ -13,6 +19,7 @@ import {
 } from './schema';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RmqService } from '@app/common/rabbitmq/rabbitmq.service';
+import { APP_FILTER } from '@nestjs/core';
 
 const env = getLocalEnv('message');
 
@@ -57,6 +64,11 @@ const env = getLocalEnv('message');
     ]),
   ],
   controllers: [MessageController],
-  providers: [MessageService, RmqService],
+  providers: [
+    MessageService,
+    RmqService,
+    { provide: APP_FILTER, useClass: CustomRpcExceptionFilter },
+    { provide: APP_FILTER, useClass: MongoExceptionFilter },
+  ],
 })
 export class MessageModule {}
