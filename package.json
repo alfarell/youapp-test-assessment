@@ -83,7 +83,8 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
-      "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1"
+      "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1",
+      "^@app/test(|/.*)$": "<rootDir>/libs/test/src/$1"
     }
   }
 }
