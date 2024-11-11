@@ -53,15 +53,14 @@ export class UserService {
       );
     }
 
-    const createProfile = new this.profileModel({
+    const createProfile = await this.profileModel.create({
       accountId,
       ...profile,
     });
-    const saveProfile = await createProfile.save();
 
     return new FormatResponse<Profile>(
       'Create profile success',
-      saveProfile.toJSON(),
+      createProfile.toJSON(),
     );
   }
 
