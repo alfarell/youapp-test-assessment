@@ -27,7 +27,7 @@ import {
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(Account.name) private userModel: Model<Account>,
+    @InjectModel(Account.name) private accountModel: Model<Account>,
     @InjectModel(Session.name) private sessionModel: Model<Session>,
     private readonly jwtService: JwtService,
   ) {}
@@ -41,16 +41,15 @@ export class AuthService {
     const { username, email, password } = payload.data;
     const salt = await bcrypt.genSalt();
     const passwordHashed = await bcrypt.hash(password, salt);
-    const createAccount = new this.userModel({
+    const createAccount = await this.accountModel.create({
       username,
       email,
       password: passwordHashed,
     });
-    const account = await createAccount.save();
 
     return new FormatResponse<AccountResponseDto>(
       'Register new account success',
-      new AccountResponseDto(account),
+      new AccountResponseDto(createAccount),
     );
   }
 
@@ -64,7 +63,7 @@ export class AuthService {
 
     return new FormatResponse<SessionResponseDto>(
       'Login success',
-      new SessionResponseDto(access, account),
+      new SessionResponseDto(access),
     );
   }
 
@@ -84,7 +83,7 @@ export class AuthService {
   }
 
   private async _isDataExist(data) {
-    const user = await this.userModel.findOne(data).exec();
+    const user = await this.accountModel.findOne(data);
     return !!user;
   }
 
@@ -97,7 +96,7 @@ export class AuthService {
   }
 
   private async _validateAccount(usernameOrEmail: string): Promise<Account> {
-    const userAccount = await this.userModel.findOne({
+    const userAccount = await this.accountModel.findOne({
       $or: [
         {
           email: usernameOrEmail,
@@ -118,12 +117,11 @@ export class AuthService {
   }
 
   private async _createSession(account: Account): Promise<Session> {
-    const session = new this.sessionModel({
+    const session = await this.sessionModel.create({
       accountId: account.id,
     });
-    const saveSession = await session.save();
 
-    return saveSession;
+    return session;
   }
 
   private _createAccessToken(
@@ -139,7 +137,7 @@ export class AuthService {
     });
 
     return {
-      tokenType: 'bearer',
+      tokenType: 'Bearer',
       accessToken,
     };
   }
