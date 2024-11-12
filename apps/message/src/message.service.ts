@@ -137,17 +137,16 @@ export class MessageService {
       },
     );
 
-    const createMessage = new this.messageModel({
+    const createMessage = await this.messageModel.create({
       conversationId: conversation._id,
       senderId: senderProfile._id,
       recipientId,
       content,
     });
-    const message = await createMessage.save();
 
     this.rmqService.ack(context);
 
-    return new FormatResponse(`Message sent to ${message.recipientId}`);
+    return new FormatResponse(`Message sent to ${createMessage.recipientId}`);
   }
 
   private async _getProfile(accountId: string) {
