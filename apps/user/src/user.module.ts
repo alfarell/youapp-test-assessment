@@ -5,7 +5,6 @@ import { ConfigModule } from '@nestjs/config';
 import {
   CustomRpcExceptionFilter,
   DatabaseModule,
-  getLocalEnv,
   MongoExceptionFilter,
 } from '@app/common';
 import * as Joi from 'joi';
@@ -13,19 +12,20 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Profile, ProfileSchema } from './schema';
 import { APP_FILTER } from '@nestjs/core';
 
-const env = getLocalEnv('user');
+// const env = getLocalEnv('user');
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
-        PORT: Joi.number().required().default(3002),
-        MONGODB_URI: Joi.string().required(),
+        USER_SERVICE_PORT: Joi.number().required().default(3002),
+        USER_SERVICE_HOST: Joi.string().required(),
+        USER_MONGODB_URI: Joi.string().required(),
       }),
-      envFilePath: env,
+      // envFilePath: env,
     }),
-    DatabaseModule,
+    DatabaseModule.register('USER'),
     MongooseModule.forFeature([
       {
         name: Profile.name,

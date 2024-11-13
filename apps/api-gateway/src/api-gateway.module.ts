@@ -3,30 +3,31 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { MessageModule } from './message/message.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { getLocalEnv, CLIENTS_NAME, AuthGuard } from '@app/common';
+import { CLIENTS_NAME, AuthGuard } from '@app/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 
-const env = getLocalEnv('api-gateway');
+// const env = getLocalEnv('api-gateway');
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
-        PORT: Joi.number().required(),
+        API_GATEWAY_PORT: Joi.number().required().default(3000),
+        AUTH_SERVICE_HOST: Joi.string().required(),
+        USER_SERVICE_HOST: Joi.string().required(),
         AUTH_SERVICE_PORT: Joi.string().required(),
         USER_SERVICE_PORT: Joi.string().required(),
-        MESSAGE_SERVICE_PORT: Joi.string().required(),
         ACCESS_TOKEN_SECRET: Joi.string().required(),
         ACCESS_TOKEN_EXPIRES: Joi.number().required(),
         RABBIT_MQ_URI: Joi.string().required(),
         RABBIT_MQ_SEND_MESSAGE_QUEUE: Joi.string().required(),
         RABBIT_MQ_VIEW_MESSAGE_QUEUE: Joi.string().required(),
       }),
-      envFilePath: env,
+      // envFilePath: env,
     }),
     ClientsModule.registerAsync({
       isGlobal: true,
@@ -36,6 +37,7 @@ const env = getLocalEnv('api-gateway');
           useFactory: (configService: ConfigService) => ({
             transport: Transport.TCP,
             options: {
+              host: configService.get('AUTH_SERVICE_HOST'),
               port: configService.get('AUTH_SERVICE_PORT'),
             },
           }),
@@ -46,6 +48,7 @@ const env = getLocalEnv('api-gateway');
           useFactory: (configService: ConfigService) => ({
             transport: Transport.TCP,
             options: {
+              host: configService.get('USER_SERVICE_HOST'),
               port: configService.get('USER_SERVICE_PORT'),
             },
           }),

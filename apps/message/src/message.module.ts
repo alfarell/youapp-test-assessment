@@ -8,7 +8,6 @@ import {
   CLIENTS_NAME,
   CustomRpcExceptionFilter,
   DatabaseModule,
-  getLocalEnv,
   MongoExceptionFilter,
 } from '@app/common';
 import {
@@ -21,20 +20,21 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RmqService } from '@app/common/rabbitmq/rabbitmq.service';
 import { APP_FILTER } from '@nestjs/core';
 
-const env = getLocalEnv('message');
+// const env = getLocalEnv('message');
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
+        USER_SERVICE_HOST: Joi.string().required(),
         USER_SERVICE_PORT: Joi.number().required(),
-        MONGODB_URI: Joi.string().required(),
+        MESSAGE_MONGODB_URI: Joi.string().required(),
         RABBIT_MQ_URI: Joi.string().required(),
         RABBIT_MQ_SEND_MESSAGE_QUEUE: Joi.string().required(),
         RABBIT_MQ_VIEW_MESSAGE_QUEUE: Joi.string().required(),
       }),
-      envFilePath: env,
+      // envFilePath: env,
     }),
     ClientsModule.registerAsync({
       isGlobal: true,
@@ -44,6 +44,7 @@ const env = getLocalEnv('message');
           useFactory: (configService: ConfigService) => ({
             transport: Transport.TCP,
             options: {
+              host: configService.get('USER_SERVICE_HOST'),
               port: configService.get('USER_SERVICE_PORT'),
             },
           }),
@@ -51,7 +52,7 @@ const env = getLocalEnv('message');
         },
       ],
     }),
-    DatabaseModule,
+    DatabaseModule.register('MESSAGE'),
     MongooseModule.forFeature([
       {
         name: Message.name,

@@ -35,7 +35,6 @@ async function bootstrap() {
     },
   );
   await app.startAllMicroservices();
-  await app.listen(config.get('PORT'));
   console.log('server listening to:', config.get('RABBIT_MQ_URI'));
 }
 bootstrap();

@@ -6,7 +6,6 @@ import { JwtModule } from '@nestjs/jwt';
 import {
   CustomRpcExceptionFilter,
   DatabaseModule,
-  getLocalEnv,
   MongoExceptionFilter,
 } from '@app/common';
 import * as Joi from 'joi';
@@ -14,21 +13,22 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Account, AccountSchema, Session, SessionSchema } from './schema';
 import { APP_FILTER } from '@nestjs/core';
 
-const env = getLocalEnv('auth');
+// const env = getLocalEnv('auth');
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
-        PORT: Joi.number().required().default(3001),
-        MONGODB_URI: Joi.string().required(),
+        AUTH_SERVICE_PORT: Joi.number().required().default(3001),
+        AUTH_SERVICE_HOST: Joi.string().required(),
+        AUTH_MONGODB_URI: Joi.string().required(),
         ACCESS_TOKEN_SECRET: Joi.string().required(),
         ACCESS_TOKEN_EXPIRES: Joi.number().required(),
       }),
-      envFilePath: env,
+      // envFilePath: env,
     }),
-    DatabaseModule,
+    DatabaseModule.register('AUTH'),
     MongooseModule.forFeature([
       {
         name: Account.name,

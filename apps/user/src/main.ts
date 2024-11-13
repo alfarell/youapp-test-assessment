@@ -10,7 +10,8 @@ async function bootstrap() {
     {
       transport: Transport.TCP,
       options: {
-        port: config.get('PORT'),
+        host: config.get('USER_SERVICE_HOST'),
+        port: config.get('USER_SERVICE_PORT'),
       },
     },
     {
@@ -18,7 +19,6 @@ async function bootstrap() {
     },
   );
   await app.startAllMicroservices();
-  await app.listen(config.get('PORT'));
-  console.log('server running on PORT:', config.get('PORT'));
+  console.log('server running on PORT:', config.get('USER_SERVICE_PORT'));
 }
 bootstrap();
