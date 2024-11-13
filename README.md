@@ -71,7 +71,15 @@ Install concurrently dependency to global npm
 $ npm i -g concurrently
 ```
 
+Install all required dependencies of the project
+
+```bash
+$ npm i
+```
+
 Update the `AUTH_SERVICE_HOST` and `USER_SERVICE_HOST` value in .env file to `localhost`
+
+Run this command to start all the services
 
 ```bash
 $ npm run start:all
