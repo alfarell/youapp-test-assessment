@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "start:all": "concurrently \"npm run start:dev api-gateway\" \"npm run start:dev auth\" \"npm run start:dev user\" \"npm run start:dev message\"",
     "build": "nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
