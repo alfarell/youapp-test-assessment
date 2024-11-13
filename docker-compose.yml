@@ -1,0 +1,158 @@
+version: '3.8'
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./apps/api-gateway/Dockerfile
+      target: development
+    command: npm run start:dev api-gateway
+    container_name: api-gateway
+    ports:
+      - '3000:3000'
+    # env_file:
+    #   - ./apps/api-gateway/.env
+    environment:
+      - API_GATEWAY_PORT=${API_GATEWAY_PORT}
+      - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
+      - USER_SERVICE_PORT=${USER_SERVICE_PORT}
+      - AUTH_SERVICE_HOST=${AUTH_SERVICE_HOST}
+      - USER_SERVICE_HOST=${USER_SERVICE_HOST}
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
+      - ACCESS_TOKEN_EXPIRES=${ACCESS_TOKEN_EXPIRES}
+      - RABBIT_MQ_URI=${RABBIT_MQ_URI}
+      - RABBIT_MQ_SEND_MESSAGE_QUEUE=${RABBIT_MQ_SEND_MESSAGE_QUEUE}
+      - RABBIT_MQ_VIEW_MESSAGE_QUEUE=${RABBIT_MQ_VIEW_MESSAGE_QUEUE}
+    depends_on:
+      - auth-service
+      - message-service
+      - user-service
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./apps/auth/Dockerfile
+      target: development
+    command: npm run start:dev auth
+    container_name: auth-service
+    ports:
+      - '3001:3001'
+    # env_file:
+    #   - ./apps/auth/.env
+    environment:
+      - AUTH_SERVICE_PORT=${AUTH_SERVICE_PORT}
+      - AUTH_SERVICE_HOST=${AUTH_SERVICE_HOST}
+      - AUTH_MONGODB_URI=${AUTH_MONGODB_URI}
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
+      - ACCESS_TOKEN_EXPIRES=${ACCESS_TOKEN_EXPIRES}
+    depends_on:
+      - mongodb-auth
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  user-service:
+    build:
+      context: .
+      dockerfile: ./apps/user/Dockerfile
+      target: development
+    command: npm run start:dev user
+    container_name: user-service
+    ports:
+      - '3002:3002'
+    # env_file:
+    #   - ./apps/user/.env
+    environment:
+      - USER_SERVICE_PORT=${USER_SERVICE_PORT}
+      - USER_SERVICE_HOST=${USER_SERVICE_HOST}
+      - USER_MONGODB_URI=${USER_MONGODB_URI}
+    depends_on:
+      - mongodb-user
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  message-service:
+    build:
+      context: .
+      dockerfile: ./apps/message/Dockerfile
+      target: development
+    command: npm run start:dev message
+    container_name: message-service
+    # env_file:
+    #   - ./apps/message/.env
+    environment:
+      - USER_SERVICE_PORT=${USER_SERVICE_PORT}
+      - USER_SERVICE_HOST=${USER_SERVICE_HOST}
+      - RABBIT_MQ_URI=${RABBIT_MQ_URI}
+      - RABBIT_MQ_SEND_MESSAGE_QUEUE=${RABBIT_MQ_SEND_MESSAGE_QUEUE}
+      - RABBIT_MQ_VIEW_MESSAGE_QUEUE=${RABBIT_MQ_VIEW_MESSAGE_QUEUE}
+      - MESSAGE_MONGODB_URI=${MESSAGE_MONGODB_URI}
+    depends_on:
+      - mongodb-message
+      - user-service
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - '5673:5672'
+
+  mongodb-auth:
+    image: mongo:latest
+    container_name: mongodb-auth
+    ports:
+      - '27018:27017'
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-auth
+      - MONGO_INITDB_ROOT_USERNAME=${DOCKER_AUTH_MONGODB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${DOCKER_AUTH_MONGODB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${DOCKER_AUTH_MONGODB_DB_NAME}
+    volumes:
+      - mongo_data_auth:/data/db
+
+  mongodb-user:
+    image: mongo:latest
+    container_name: mongodb-user
+    ports:
+      - '27019:27017'
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-user
+      - MONGO_INITDB_ROOT_USERNAME=${DOCKER_USER_MONGODB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${DOCKER_USER_MONGODB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${DOCKER_USER_MONGODB_DB_NAME}
+    volumes:
+      - mongo_data_user:/data/db
+
+  mongodb-message:
+    image: mongo:latest
+    container_name: mongodb-message
+    ports:
+      - '27020:27017'
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=mongodb-message
+      - MONGO_INITDB_ROOT_USERNAME=${DOCKER_MESSAGE_MONGODB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${DOCKER_MESSAGE_MONGODB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${DOCKER_MESSAGE_MONGODB_DB_NAME}
+    volumes:
+      - mongo_data_message:/data/db
+
+volumes:
+  mongo_data_auth:
+    driver: local
+  mongo_data_user:
+    driver: local
+  mongo_data_message:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
