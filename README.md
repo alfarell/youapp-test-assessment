@@ -76,3 +76,9 @@ Update the `AUTH_SERVICE_HOST` and `USER_SERVICE_HOST` value in .env file to `lo
 ```bash
 $ npm run start:all
 ```
+
+### API Docs
+
+open `http://localhost:3000/docs/` to access the api documentation
+
+after you register and login, copy the access token and paste it to the Authorize (green button on top rigt) to set the global authorization header
